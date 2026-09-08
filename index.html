@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Perm picker</title>
+<meta name="description" content="Which perm and cut to ask for at the next salon visit: East Asian male, medium to shoulder length, digital perm, light wave, must also slick back.">
+<style>
+:root{--bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--fg:#e6e6e6;--mut:#9aa3b2;--acc:#8ccfff;--dig:#2e8b57;--eit:#b8860b;--col:#b22222;--pick:#ffd166}
+:root[data-theme="light"]{--bg:#f6f7f9;--panel:#fff;--line:#dde1e7;--fg:#1a1d23;--mut:#5b6472;--acc:#0b63c7}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Noto Sans KR",sans-serif}
+a{color:var(--acc)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header.top{padding:28px 0 12px;border-bottom:1px solid var(--line)}
+header.top h1{margin:0 0 6px;font-size:26px}
+header.top p{margin:4px 0;color:var(--mut)}
+nav.bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 0;display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:14px}
+nav.bar button{cursor:pointer;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 10px}
+nav.bar button[aria-pressed="true"]{border-color:var(--acc);color:var(--acc)}
+section{padding:22px 0}
+h2{font-size:20px;margin:0 0 10px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.facts div{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px}
+.facts b{display:block;margin-bottom:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.card.picked{border-color:var(--pick);box-shadow:0 0 0 1px var(--pick) inset}
+.card header{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.card h3{margin:0;font-size:17px}
+.names{margin:2px 0 0;color:var(--mut);font-size:13px}
+.card p{margin:0}
+.meta{font-size:13px;color:var(--mut)}
+.badge{display:inline-block;padding:1px 7px;border-radius:4px;color:#fff;font-size:12px;font-weight:600}
+.b-digital{background:var(--dig)}.b-either{background:var(--eit)}.b-cold{background:var(--col)}
+.fit{color:var(--pick);letter-spacing:1px}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13px}
+dt{color:var(--mut)}dd{margin:0}
+.pick{cursor:pointer;white-space:nowrap;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:13px}
+.pick[aria-pressed="true"]{background:var(--pick);color:#000;border-color:var(--pick)}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.t{position:relative;display:block;aspect-ratio:3/4;overflow:hidden;border-radius:4px;background:#222}
+.t img{width:100%;height:100%;object-fit:cover;display:block}
+.t i{position:absolute;left:3px;top:3px;font:600 10px/1 system-ui;font-style:normal;color:#fff;padding:2px 4px;border-radius:3px;background:#555}
+.t.v-digital i{background:var(--dig)}.t.v-either i{background:var(--eit)}.t.v-cold i{background:var(--col)}
+.small{font-size:12px;color:var(--mut)}
+.wide{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+.wide .t{aspect-ratio:3/4}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mut);font-weight:600}
+.script{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:8px;padding:12px 14px}
+.script ol{margin:6px 0 0 18px;padding:0}
+#tray{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:8px 16px;display:none;gap:10px;align-items:center;flex-wrap:wrap;z-index:6;font-size:14px}
+#tray.on{display:flex}
+#tray button{cursor:pointer;background:var(--pick);color:#000;border:0;border-radius:6px;padding:5px 10px;font-weight:600}
+#tray .clr{background:transparent;color:var(--mut);border:1px solid var(--line)}
+footer{padding:24px 0 80px;color:var(--mut);font-size:13px;border-top:1px solid var(--line)}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f6f7f9;--panel:#fff;--line:#dde1e7;--fg:#1a1d23;--mut:#5b6472;--acc:#0b63c7}}
+@media (max-width:480px){.strip{grid-template-columns:repeat(4,1fr)}.card header{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <h1>Which perm do I ask for?</h1>
+  <p><b>Brief:</b> East Asian male · oval face · thick straight hair · chin→shoulder length · light flowy wave · must also push/slick back · street and salon references, not editorial.</p>
+  <p>Pick cards below, then copy the shortlist for the stylist. Photos come from the research library (1,255 images, 42 preview PDFs); badge = digital / either / cold by <em>filename keyword</em>, not by looking at the photo. Full findings: <a href="catalog.md">catalog.md</a> · every source tried: <a href="sources.md">sources.md</a> · <a href="README.md">README</a> · token cost: <a href="prompt/README.md">prompt/</a>.</p>
+</header>
+
+<nav class="bar">
+  <a href="#cards">Styles</a> <a href="#real">Real people</a> <a href="#script">Salon script</a> <a href="#cost">Cost</a> <a href="images/index.html">Gallery (1,255)</a>
+  <span style="flex:1"></span>
+  <button id="f-all" aria-pressed="true">all</button><button id="f-digital">digital only</button><button id="f-back">slicks back</button>
+  <button id="theme" title="toggle theme">◐</button>
+</nav>
+
+<section id="facts">
+  <h2>Five facts that decide everything</h2>
+  <div class="facts">
+    <div><b>Digital perm needs 12 cm+.</b> Chin→shoulder is exactly where it becomes the right tool, but you pay the medium/long tier.</div>
+    <div><b>Digital shows its wave dry, cold shows it wet.</b> Digital combs back cleanly; cold re-springs when it meets gel or water.</div>
+    <div><b>Digital cannot be wound near the root.</b> Root lift for a pushed-back front is a separate root / cold / iron perm.</div>
+    <div><b>Thick straight hair will not stay back on product alone.</b> Wave on top, and down perm on the sides while they are still short.</div>
+    <div><b>Plan a re-perm every 3 months.</b> Reddit thick hair: 4 days–1.5 mo. JP stylists: 3–4 mo. Anything over 4 mo is marketing.</div>
+  </div>
+</section>
+
+<section id="cards">
+  <h2>Candidate styles</h2>
+  <div class="grid">
+<article class="card" id="allback" data-key="allback">
+  <header>
+    <div>
+      <h3>Pushed-back wave (kakiage / all-back)</h3>
+      <p class="names">올백펌 · 슬릭백 · かきあげ · オールバック · 后梳</p>
+    </div>
+    <button class="pick" data-key="allback" aria-pressed="false" title="Add to my shortlist">☆ pick</button>
+  </header>
+  <p class="meta"><span class="badge b-digital">Digital</span> <span class="fit" title="fit for the brief">★★★★★</span> · slick-back: <b>Yes — this is the target</b> · catalog rows #9, #3</p>
+  <p>The reason to choose digital at all: wave sits in the length, top lies back and stays. Root lift needs a separate root/iron perm or blow-dry.</p>
+  <dl>
+    <dt>Ask for</dt><dd>Digital or setting perm, large rods, mid-lengths→ends. Add root perm at the front if you want lift. Gel on damp roots, comb back.</dd>
+    <dt>Cost</dt><dd>KR ₩150–300k · JP ¥12–18k · + down perm ₩20–40k if sides still short</dd>
+    <dt>Hold</dt><dd>3–4 mo (JP stylists) · 1.5 mo on thick hair (reddit)</dd>
+  </dl>
+  <div class="strip"><a href="images/jp/hotpepper_manbun-magazineperm-perm_be29f0.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_manbun-magazineperm-perm_be29f0.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_manbun-magazineperm-perm_be29f0.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_manbun-magazineperm-perm_c07192.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_manbun-magazineperm-perm_c07192.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_manbun-magazineperm-perm_c07192.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_manbun-magazineperm-perm_c2d7fc.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_manbun-magazineperm-perm_c2d7fc.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_manbun-magazineperm-perm_c2d7fc.jpg" alt=""><i>digital</i></a><a href="images/sea/vn_anhtoc_undercut-slicked-back_23b8f36c.webp" target="_blank" class="t v-digital" title="sea · vn_anhtoc_undercut-slicked-back_23b8f36c.webp"><img loading="lazy" src="images/_thumbs/sea__vn_anhtoc_undercut-slicked-back_23b8f36c.jpg" alt=""><i>digital</i></a><a href="images/sea/id_idntimes_slick-back_61e1de84.jpg" target="_blank" class="t v-either" title="sea · id_idntimes_slick-back_61e1de84.jpg"><img loading="lazy" src="images/_thumbs/sea__id_idntimes_slick-back_61e1de84.jpg" alt=""><i>either</i></a><a href="images/sea/th_hairtran_slicked-back-long_bf9e4407.jpg" target="_blank" class="t v-either" title="sea · th_hairtran_slicked-back-long_bf9e4407.jpg"><img loading="lazy" src="images/_thumbs/sea__th_hairtran_slicked-back-long_bf9e4407.jpg" alt=""><i>either</i></a><a href="images/jp/hotpepper_manbun-magazineperm-perm_dd6f62.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_manbun-magazineperm-perm_dd6f62.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_manbun-magazineperm-perm_dd6f62.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_allback-long-bob_81c5ec.jpg" target="_blank" class="t v-either" title="jp · hotpepper_allback-long-bob_81c5ec.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_allback-long-bob_81c5ec.jpg" alt=""><i>either</i></a></div>
+  <p class="small">8 of 37 name-matched photos · <a href="images/index.html">all in the gallery</a></p>
+</article>
+<article class="card" id="shadow" data-key="shadow">
+  <header>
+    <div>
+      <h3>Shadow perm</h3>
+      <p class="names">쉐도우펌 · シャドウパーマ</p>
+    </div>
+    <button class="pick" data-key="shadow" aria-pressed="false" title="Add to my shortlist">☆ pick</button>
+  </header>
+  <p class="meta"><span class="badge b-digital">Digital</span> <span class="fit" title="fit for the brief">★★★★★</span> · slick-back: <b>Yes</b> · catalog rows #2</p>
+  <p>Curl only on mid-lengths and ends, root left natural, so it combs back cleanly and frizzes less. Korean origin, now a LIPPS category in Japan.</p>
+  <dl>
+    <dt>Ask for</dt><dd>Say &#x27;shadow perm, root natural, S-wave not C-curl, I will push it back&#x27;.</dd>
+    <dt>Cost</dt><dd>KR ₩50–120k · JP perm tier</dd>
+    <dt>Hold</dt><dd>2 mo KR · 3–4 mo if done digital</dd>
+  </dl>
+  <div class="strip"><a href="images/jp/hotpepper_centerpart-wolf-shadowperm_7bed11.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_centerpart-wolf-shadowperm_7bed11.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_centerpart-wolf-shadowperm_7bed11.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_nuance-shadowperm-perm_0b6d99.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_nuance-shadowperm-perm_0b6d99.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_nuance-shadowperm-perm_0b6d99.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_nuance-shadowperm-perm_372ecb.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_nuance-shadowperm-perm_372ecb.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_nuance-shadowperm-perm_372ecb.jpg" alt=""><i>digital</i></a><a href="images/sea/id_3second_shadow-perm_6a567d2a.png" target="_blank" class="t v-digital" title="sea · id_3second_shadow-perm_6a567d2a.png"><img loading="lazy" src="images/_thumbs/sea__id_3second_shadow-perm_6a567d2a.jpg" alt=""><i>digital</i></a><a href="images/sea/sg_dailyvanity_shadow-perm_f021d6f2.png" target="_blank" class="t v-digital" title="sea · sg_dailyvanity_shadow-perm_f021d6f2.png"><img loading="lazy" src="images/_thumbs/sea__sg_dailyvanity_shadow-perm_f021d6f2.jpg" alt=""><i>digital</i></a><a href="images/sea/sg_dailyvanity_wolf-shadow-perm-medium_0c3ade79.png" target="_blank" class="t v-digital" title="sea · sg_dailyvanity_wolf-shadow-perm-medium_0c3ade79.png"><img loading="lazy" src="images/_thumbs/sea__sg_dailyvanity_wolf-shadow-perm-medium_0c3ade79.jpg" alt=""><i>digital</i></a><a href="images/direct/cdn.shopify.com_s_files_1_0029_0868_4397_files_shadow-perm-hairstyle-men.webp_83914c.webp" target="_blank" class="t v-digital" title="direct · cdn.shopify.com_s_files_1_0029_0868_4397_files_shadow-perm-hairstyle-men.webp_83914c.webp"><img loading="lazy" src="images/_thumbs/direct__cdn.shopify.com_s_files_1_0029_0868_4397_files_shadow-perm-hairstyle-men.webp_83914c.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_shadowperm-layer_c9953f.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_shadowperm-layer_c9953f.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_shadowperm-layer_c9953f.jpg" alt=""><i>digital</i></a></div>
+  <p class="small">8 of 24 name-matched photos · <a href="images/index.html">all in the gallery</a></p>
+</article>
+<article class="card" id="vintage" data-key="vintage">
+  <header>
+    <div>
+      <h3>Vintage perm (end-only S-curl)</h3>
+      <p class="names">빈티지펌 · 중단발</p>
+    </div>
+    <button class="pick" data-key="vintage" aria-pressed="false" title="Add to my shortlist">☆ pick</button>
+  </header>
+  <p class="meta"><span class="badge b-digital">Digital</span> <span class="fit" title="fit for the brief">★★★★★</span> · slick-back: <b>Yes (root flat)</b> · catalog rows #1</p>
+  <p>Closest single Korean term for the brief: chin→collarbone length, soft S on the ends, flat root, dry-and-go. Salon marketing name, not a booking-app tag.</p>
+  <dl>
+    <dt>Ask for</dt><dd>Ask for 빈티지펌 on 중단발; fringe to the eyes, sides clear the ear, nape grown.</dd>
+    <dt>Cost</dt><dd>KR ₩88k cold / ₩112k heat · premium ₩219k</dd>
+    <dt>Hold</dt><dd>3 mo (stylist-verified)</dd>
+  </dl>
+  <div class="strip"><a href="images/kr/mamedene-mag172_jangbal-leafperm-04.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-04.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-04.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene-mag172_jangbal-leafperm-05.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-05.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-05.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene-mag172_jangbal-leafperm-08.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-08.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-08.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm00.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm00.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm00.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm01.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm01.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm01.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm02.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm02.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm02.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene-mag172_jangbal-leafperm-09.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-09.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-09.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene-mag172_jangbal-leafperm-14.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-14.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-14.jpg" alt=""><i>either</i></a></div>
+  <p class="small">8 of 67 name-matched photos · <a href="images/index.html">all in the gallery</a></p>
+</article>
+<article class="card" id="leaf" data-key="leaf">
+  <header>
+    <div>
+      <h3>Leaf cut + soft wave</h3>
+      <p class="names">리프컷 · 리프펌</p>
+    </div>
+    <button class="pick" data-key="leaf" aria-pressed="false" title="Add to my shortlist">☆ pick</button>
+  </header>
+  <p class="meta"><span class="badge b-either">Either</span> <span class="fit" title="fit for the brief">★★★★★</span> · slick-back: <b>Yes</b> · catalog rows #16</p>
+  <p>Softest Korean cut base for a light wave; long nape, flexible length, pushes back easily. KR salons usually do 리프펌 cold; ask digital if you want it to slick back.</p>
+  <dl>
+    <dt>Ask for</dt><dd>리프컷 base, then digital on ends. Refuse two-block explicitly.</dd>
+    <dt>Cost</dt><dd>cut ₩15–30k + perm</dd>
+    <dt>Hold</dt><dd>8-week trims</dd>
+  </dl>
+  <div class="strip"><a href="images/kr/mamedene-mag172_jangbal-leafperm-04.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-04.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-04.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene-mag172_jangbal-leafperm-05.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-05.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-05.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene-mag172_jangbal-leafperm-08.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-08.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-08.jpg" alt=""><i>either</i></a><a href="images/sea/id_3second_leaf-cut_61c68193.png" target="_blank" class="t v-either" title="sea · id_3second_leaf-cut_61c68193.png"><img loading="lazy" src="images/_thumbs/sea__id_3second_leaf-cut_61c68193.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene-mag172_jangbal-leafperm-09.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-09.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-09.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene-mag172_jangbal-leafperm-14.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-14.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-14.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene-mag172_jangbal-leafperm-15.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-15.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-15.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene-mag172_jangbal-leafperm-20.jpg" target="_blank" class="t v-either" title="kr · mamedene-mag172_jangbal-leafperm-20.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag172_jangbal-leafperm-20.jpg" alt=""><i>either</i></a></div>
+  <p class="small">8 of 65 name-matched photos · <a href="images/index.html">all in the gallery</a></p>
+</article>
+<article class="card" id="digital" data-key="digital">
+  <header>
+    <div>
+      <h3>Digital wave / body-wave</h3>
+      <p class="names">디지털펌 · デジタルパーマ · 韓国風デジタルパーマ · uốn kỹ thuật số</p>
+    </div>
+    <button class="pick" data-key="digital" aria-pressed="false" title="Add to my shortlist">☆ pick</button>
+  </header>
+  <p class="meta"><span class="badge b-digital">Digital</span> <span class="fit" title="fit for the brief">★★★★★</span> · slick-back: <b>Best partner (inference)</b> · catalog rows #3, #4</p>
+  <p>The technique itself: heated rods, shape-memory, shows its wave dry. Needs 12 cm+, priced at the medium/long tier. Korean-style variant adds a comb-through gloss finish.</p>
+  <dl>
+    <dt>Ask for</dt><dd>Large rods, loose S, ends only. Routine: mist, pat dry, cream mid→ends, blow-dry low, cool-air set.</dd>
+    <dt>Cost</dt><dd>KR ₩150–300k · JP ¥12–18k · TW NT$3,400 · US $150–450</dd>
+    <dt>Hold</dt><dd>3–4 mo</dd>
+  </dl>
+  <div class="strip"><a href="images/jp/hotpepper_digitalperm-layer-medium_658d42.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_digitalperm-layer-medium_658d42.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_digitalperm-layer-medium_658d42.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_digitalperm-layer-perm_6d4059.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_digitalperm-layer-perm_6d4059.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_digitalperm-layer-perm_6d4059.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_digitalperm-perm_63440a.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_digitalperm-perm_63440a.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_digitalperm-perm_63440a.jpg" alt=""><i>digital</i></a><a href="images/sea/id_miinhair_korean-wave-digital-perm_67985188.jpg" target="_blank" class="t v-digital" title="sea · id_miinhair_korean-wave-digital-perm_67985188.jpg"><img loading="lazy" src="images/_thumbs/sea__id_miinhair_korean-wave-digital-perm_67985188.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_digitalperm-perm_ca03e4.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_digitalperm-perm_ca03e4.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_digitalperm-perm_ca03e4.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_digitalperm-perm_e05009.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_digitalperm-perm_e05009.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_digitalperm-perm_e05009.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_digitalperm-ronge-genderless_4f06e5.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_digitalperm-ronge-genderless_4f06e5.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_digitalperm-ronge-genderless_4f06e5.jpg" alt=""><i>digital</i></a><a href="images/jp/ozmall_digitalperm-korean-layer_23db7f.jpg" target="_blank" class="t v-digital" title="jp · ozmall_digitalperm-korean-layer_23db7f.jpg"><img loading="lazy" src="images/_thumbs/jp__ozmall_digitalperm-korean-layer_23db7f.jpg" alt=""><i>digital</i></a></div>
+  <p class="small">8 of 11 name-matched photos · <a href="images/index.html">all in the gallery</a></p>
+</article>
+<article class="card" id="nuance" data-key="nuance">
+  <header>
+    <div>
+      <h3>Nuance / feather / wave-wrap perm</h3>
+      <p class="names">ニュアンスパーマ · フェザーパーマ · 波巻きパーマ</p>
+    </div>
+    <button class="pick" data-key="nuance" aria-pressed="false" title="Add to my shortlist">☆ pick</button>
+  </header>
+  <p class="meta"><span class="badge b-either">Either</span> <span class="fit" title="fit for the brief">★★★★☆</span> · slick-back: <b>Partial</b> · catalog rows #5, #6</p>
+  <p>Japan&#x27;s lightest register: loosest wind, least damage, &#x27;natural movement&#x27;. Often done cold on men, so it drops in 1–2 months; do it digital for hold.</p>
+  <dl>
+    <dt>Ask for</dt><dd>ニュアンスパーマ or 波巻き on medium; ask for 弱め.</dd>
+    <dt>Cost</dt><dd>JP ¥6–20k incl. cut</dd>
+    <dt>Hold</dt><dd>1–2 mo cold · 3–4 mo digital</dd>
+  </dl>
+  <div class="strip"><a href="images/jp/hotpepper_bob-genderless-annui_83c3dc.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_bob-genderless-annui_83c3dc.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_bob-genderless-annui_83c3dc.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_nuance-shadowperm-perm_0b6d99.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_nuance-shadowperm-perm_0b6d99.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_nuance-shadowperm-perm_0b6d99.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_nuance-shadowperm-perm_372ecb.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_nuance-shadowperm-perm_372ecb.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_nuance-shadowperm-perm_372ecb.jpg" alt=""><i>digital</i></a><a href="images/social/lemon8_feather0.webp" target="_blank" class="t v-either" title="social · lemon8_feather0.webp"><img loading="lazy" src="images/_thumbs/social__lemon8_feather0.jpg" alt=""><i>either</i></a><a href="images/social/lemon8_feather1.webp" target="_blank" class="t v-either" title="social · lemon8_feather1.webp"><img loading="lazy" src="images/_thumbs/social__lemon8_feather1.jpg" alt=""><i>either</i></a><a href="images/social/lemon8_feather2.webp" target="_blank" class="t v-either" title="social · lemon8_feather2.webp"><img loading="lazy" src="images/_thumbs/social__lemon8_feather2.jpg" alt=""><i>either</i></a><a href="images/jp/hotpepper_ronge-genderless-annui_34b12b.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_ronge-genderless-annui_34b12b.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_ronge-genderless-annui_34b12b.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_ronge-long-annui_9fce01.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_ronge-long-annui_9fce01.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_ronge-long-annui_9fce01.jpg" alt=""><i>digital</i></a></div>
+  <p class="small">8 of 94 name-matched photos · <a href="images/index.html">all in the gallery</a></p>
+</article>
+<article class="card" id="centerpart" data-key="centerpart">
+  <header>
+    <div>
+      <h3>Center part / curtain (worn down)</h3>
+      <p class="names">중간가르마 · 가르마펌 · センターパート · カルマパーマ · 中分</p>
+    </div>
+    <button class="pick" data-key="centerpart" aria-pressed="false" title="Add to my shortlist">☆ pick</button>
+  </header>
+  <p class="meta"><span class="badge b-digital">Digital</span> <span class="fit" title="fit for the brief">★★★★☆</span> · slick-back: <b>No as a forward style · Yes with karma root lift</b> · catalog rows #7, #14</p>
+  <p>The &#x27;down&#x27; half of the brief. Digital gives a clean glossy C-bend from the cheekbone, flat crown. Karma perm adds root lift at the part so it can also push back.</p>
+  <dl>
+    <dt>Ask for</dt><dd>Center part + digital on ends; optional root perm at the part (카르마펌). Needs a decent forehead.</dd>
+    <dt>Cost</dt><dd>JP ¥10–15k · KR ₩50–100k</dd>
+    <dt>Hold</dt><dd>1–2 mo (root) · 3–4 mo (ends)</dd>
+  </dl>
+  <div class="strip"><a href="images/jp/hotpepper_centerpart-wolf-shadowperm_7bed11.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_centerpart-wolf-shadowperm_7bed11.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_centerpart-wolf-shadowperm_7bed11.jpg" alt=""><i>digital</i></a><a href="images/jp/lipps_centerpart-shadowperm-perm_082b61.jpg" target="_blank" class="t v-digital" title="jp · lipps_centerpart-shadowperm-perm_082b61.jpg"><img loading="lazy" src="images/_thumbs/jp__lipps_centerpart-shadowperm-perm_082b61.jpg" alt=""><i>digital</i></a><a href="images/jp/lipps_centerpart-wolf-shadowperm_219a17.jpg" target="_blank" class="t v-digital" title="jp · lipps_centerpart-wolf-shadowperm_219a17.jpg"><img loading="lazy" src="images/_thumbs/jp__lipps_centerpart-wolf-shadowperm_219a17.jpg" alt=""><i>digital</i></a><a href="images/sea/id_3second_curtain-hair_2e7f4c5b.png" target="_blank" class="t v-either" title="sea · id_3second_curtain-hair_2e7f4c5b.png"><img loading="lazy" src="images/_thumbs/sea__id_3second_curtain-hair_2e7f4c5b.jpg" alt=""><i>either</i></a><a href="images/sea/id_idntimes_curtains-fringe_ccd8777b.jpg" target="_blank" class="t v-either" title="sea · id_idntimes_curtains-fringe_ccd8777b.jpg"><img loading="lazy" src="images/_thumbs/sea__id_idntimes_curtains-fringe_ccd8777b.jpg" alt=""><i>either</i></a><a href="images/sea/id_idntimes_long-hair-curtains_8e47e02f.jpg" target="_blank" class="t v-either" title="sea · id_idntimes_long-hair-curtains_8e47e02f.jpg"><img loading="lazy" src="images/_thumbs/sea__id_idntimes_long-hair-curtains_8e47e02f.jpg" alt=""><i>either</i></a><a href="images/direct/cdn.shopify.com_s_files_1_0029_0868_4397_files_kpop-curtain-bangs-men.webp_52d982.webp" target="_blank" class="t v-either" title="direct · cdn.shopify.com_s_files_1_0029_0868_4397_files_kpop-curtain-bangs-men.webp_52d982.webp"><img loading="lazy" src="images/_thumbs/direct__cdn.shopify.com_s_files_1_0029_0868_4397_files_kpop-curtain-bangs-men.webp_52d982.jpg" alt=""><i>either</i></a><a href="images/jp/ozmall_centerpart-shadowperm-perm_3d849c.jpg" target="_blank" class="t v-digital" title="jp · ozmall_centerpart-shadowperm-perm_3d849c.jpg"><img loading="lazy" src="images/_thumbs/jp__ozmall_centerpart-shadowperm-perm_3d849c.jpg" alt=""><i>digital</i></a></div>
+  <p class="small">8 of 88 name-matched photos · <a href="images/index.html">all in the gallery</a></p>
+</article>
+<article class="card" id="wolf" data-key="wolf">
+  <header>
+    <div>
+      <h3>Wolf / layered / hush + light perm</h3>
+      <p class="names">울프컷 · 레이어드컷 · 허쉬컷 · ウルフパーマ · マッシュウルフ</p>
+    </div>
+    <button class="pick" data-key="wolf" aria-pressed="false" title="Add to my shortlist">☆ pick</button>
+  </header>
+  <p class="meta"><span class="badge b-either">Either</span> <span class="fit" title="fit for the brief">★★★★☆</span> · slick-back: <b>Yes</b> · catalog rows #15, #17, #18</p>
+  <p>Jaw front, shoulder back. Redditors: &#x27;brushing it back has 100% helped&#x27;. Digital = tidy K-wolf; cold = shaggy volume. Trim every 8 weeks or it becomes a mullet.</p>
+  <dl>
+    <dt>Ask for</dt><dd>Wolf/layered base + light wave on the layers (波巻き / nuance), digital if you want it neat.</dd>
+    <dt>Cost</dt><dd>JP cut+perm ¥11–14k</dd>
+    <dt>Hold</dt><dd>2–3 mo</dd>
+  </dl>
+  <div class="strip"><a href="images/jp/hotpepper_centerpart-wolf-shadowperm_7bed11.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_centerpart-wolf-shadowperm_7bed11.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_centerpart-wolf-shadowperm_7bed11.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_digitalperm-layer-medium_658d42.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_digitalperm-layer-medium_658d42.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_digitalperm-layer-medium_658d42.jpg" alt=""><i>digital</i></a><a href="images/jp/hotpepper_digitalperm-layer-perm_6d4059.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_digitalperm-layer-perm_6d4059.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_digitalperm-layer-perm_6d4059.jpg" alt=""><i>digital</i></a><a href="images/sea/sg_dailyvanity_wolf-shadow-perm-medium_0c3ade79.png" target="_blank" class="t v-digital" title="sea · sg_dailyvanity_wolf-shadow-perm-medium_0c3ade79.png"><img loading="lazy" src="images/_thumbs/sea__sg_dailyvanity_wolf-shadow-perm-medium_0c3ade79.jpg" alt=""><i>digital</i></a><a href="images/kr/mamedene_레이어드컷-Rititi-리티티_1909466.jpg" target="_blank" class="t v-either" title="kr · mamedene_레이어드컷-Rititi-리티티_1909466.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_레이어드컷-Rititi-리티티_1909466.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene_레이어드컷-Rititi-리티티_1909469.jpg" target="_blank" class="t v-either" title="kr · mamedene_레이어드컷-Rititi-리티티_1909469.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_레이어드컷-Rititi-리티티_1909469.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene_레이어드컷-Rititi-리티티_1909471.jpg" target="_blank" class="t v-either" title="kr · mamedene_레이어드컷-Rititi-리티티_1909471.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_레이어드컷-Rititi-리티티_1909471.jpg" alt=""><i>either</i></a><a href="images/sea/ph_culturedgrooming_medium-layered_6e497ea1.webp" target="_blank" class="t v-either" title="sea · ph_culturedgrooming_medium-layered_6e497ea1.webp"><img loading="lazy" src="images/_thumbs/sea__ph_culturedgrooming_medium-layered_6e497ea1.jpg" alt=""><i>either</i></a></div>
+  <p class="small">8 of 180 name-matched photos · <a href="images/index.html">all in the gallery</a></p>
+</article>
+<article class="card" id="mash" data-key="mash">
+  <header>
+    <div>
+      <h3>Mash-long / men&#x27;s bob (one length)</h3>
+      <p class="names">マッシュロング · メンズボブ · 중단발 · 披肩</p>
+    </div>
+    <button class="pick" data-key="mash" aria-pressed="false" title="Add to my shortlist">☆ pick</button>
+  </header>
+  <p class="meta"><span class="badge b-digital">Digital</span> <span class="fit" title="fit for the brief">★★★☆☆</span> · slick-back: <b>Partial</b> · catalog rows #28 area, §14</p>
+  <p>Uniform big wave from the ear down, the JP &#x27;ミディアムパーマ&#x27; catalog look. Heavy curtain; needs side thinning or down perm below shoulder length on thick hair.</p>
+  <dl>
+    <dt>Ask for</dt><dd>One-length bob + digital from ear down; ask for thinning at the sides.</dd>
+    <dt>Cost</dt><dd>JP perm tier</dd>
+    <dt>Hold</dt><dd>3–4 mo</dd>
+  </dl>
+  <div class="strip"><a href="images/jp/beautystockpho_long_249d67.jpg" target="_blank" class="t v-digital" title="jp · beautystockpho_long_249d67.jpg"><img loading="lazy" src="images/_thumbs/jp__beautystockpho_long_249d67.jpg" alt=""><i>digital</i></a><a href="images/jp/bestory_long_a49ffa.jpg" target="_blank" class="t v-digital" title="jp · bestory_long_a49ffa.jpg"><img loading="lazy" src="images/_thumbs/jp__bestory_long_a49ffa.jpg" alt=""><i>digital</i></a><a href="images/jp/d8hourrj763pp_long_b13402.jpg" target="_blank" class="t v-digital" title="jp · d8hourrj763pp_long_b13402.jpg"><img loading="lazy" src="images/_thumbs/jp__d8hourrj763pp_long_b13402.jpg" alt=""><i>digital</i></a><a href="images/sea/th_hairtran_long-curly_94820dd8.jpg" target="_blank" class="t v-digital" title="sea · th_hairtran_long-curly_94820dd8.jpg"><img loading="lazy" src="images/_thumbs/sea__th_hairtran_long-curly_94820dd8.jpg" alt=""><i>digital</i></a><a href="images/sea/th_hairtran_long-fringe_ea6021da.jpg" target="_blank" class="t v-digital" title="sea · th_hairtran_long-fringe_ea6021da.jpg"><img loading="lazy" src="images/_thumbs/sea__th_hairtran_long-fringe_ea6021da.jpg" alt=""><i>digital</i></a><a href="images/direct/cdn.shopify.com_s_files_1_0029_0868_4397_files_long-flow-haircut-men.webp_0dc18a.webp" target="_blank" class="t v-digital" title="direct · cdn.shopify.com_s_files_1_0029_0868_4397_files_long-flow-haircut-men.webp_0dc18a.webp"><img loading="lazy" src="images/_thumbs/direct__cdn.shopify.com_s_files_1_0029_0868_4397_files_long-flow-haircut-men.webp_0dc18a.jpg" alt=""><i>digital</i></a><a href="images/sea/id_idntimes_long-hair-curtains_8e47e02f.jpg" target="_blank" class="t v-either" title="sea · id_idntimes_long-hair-curtains_8e47e02f.jpg"><img loading="lazy" src="images/_thumbs/sea__id_idntimes_long-hair-curtains_8e47e02f.jpg" alt=""><i>either</i></a><a href="images/jp/hotpepper_bob-genderless-annui_83c3dc.jpg" target="_blank" class="t v-digital" title="jp · hotpepper_bob-genderless-annui_83c3dc.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_bob-genderless-annui_83c3dc.jpg" alt=""><i>digital</i></a></div>
+  <p class="small">8 of 157 name-matched photos · <a href="images/index.html">all in the gallery</a></p>
+</article>
+<article class="card" id="hippie" data-key="hippie">
+  <header>
+    <div>
+      <h3>Hippie / semi-hippie / grunge (reference: what digital cannot do)</h3>
+      <p class="names">히피펌 · 세미히피펌 · 그런지펌</p>
+    </div>
+    <button class="pick" data-key="hippie" aria-pressed="false" title="Add to my shortlist">☆ pick</button>
+  </header>
+  <p class="meta"><span class="badge b-cold">Cold perm</span> <span class="fit" title="fit for the brief">★★☆☆☆</span> · slick-back: <b>Low (full) · medium (semi)</b> · catalog rows #11, #17</p>
+  <p>Root-to-tip irregular S, messy, matte, full volume. Digital leaves the top 3–5 cm straight, so all-over crimp is impossible. Hybrid (cold root + digital ends) is the compromise.</p>
+  <dl>
+    <dt>Ask for</dt><dd>If you want this, it is a cold perm. Ask for 세미 (looser) to stay near the brief.</dd>
+    <dt>Cost</dt><dd>KR ₩88–112k · tourist ₩120–220k</dd>
+    <dt>Hold</dt><dd>2–3 mo</dd>
+  </dl>
+  <div class="strip"><a href="images/jp/hotpepper_grunge-layer-bob_9be87b.jpg" target="_blank" class="t v-cold" title="jp · hotpepper_grunge-layer-bob_9be87b.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_grunge-layer-bob_9be87b.jpg" alt=""><i>cold</i></a><a href="images/jp/hotpepper_grunge-long-perm_79a4ed.jpg" target="_blank" class="t v-cold" title="jp · hotpepper_grunge-long-perm_79a4ed.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_grunge-long-perm_79a4ed.jpg" alt=""><i>cold</i></a><a href="images/jp/hotpepper_grunge-perm_23d10c.jpg" target="_blank" class="t v-cold" title="jp · hotpepper_grunge-perm_23d10c.jpg"><img loading="lazy" src="images/_thumbs/jp__hotpepper_grunge-perm_23d10c.jpg" alt=""><i>cold</i></a><a href="images/kr/mamedene-mag292_grungeperm-05.jpg" target="_blank" class="t v-cold" title="kr · mamedene-mag292_grungeperm-05.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag292_grungeperm-05.jpg" alt=""><i>cold</i></a><a href="images/kr/mamedene-mag292_grungeperm-06.jpg" target="_blank" class="t v-cold" title="kr · mamedene-mag292_grungeperm-06.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag292_grungeperm-06.jpg" alt=""><i>cold</i></a><a href="images/kr/mamedene-mag292_grungeperm-10.jpg" target="_blank" class="t v-cold" title="kr · mamedene-mag292_grungeperm-10.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene-mag292_grungeperm-10.jpg" alt=""><i>cold</i></a><a href="images/social/ig_hippieperm00.jpg" target="_blank" class="t v-cold" title="social · ig_hippieperm00.jpg"><img loading="lazy" src="images/_thumbs/social__ig_hippieperm00.jpg" alt=""><i>cold</i></a><a href="images/social/ig_hippieperm01.jpg" target="_blank" class="t v-cold" title="social · ig_hippieperm01.jpg"><img loading="lazy" src="images/_thumbs/social__ig_hippieperm01.jpg" alt=""><i>cold</i></a></div>
+  <p class="small">8 of 54 name-matched photos · <a href="images/index.html">all in the gallery</a></p>
+</article>
+  </div>
+</section>
+
+<section id="real">
+  <h2>Real people, not catalog models</h2>
+  <p class="small">Instagram #남자장발펌 salon posts naming the exact perm used, and the reddit before/afters the catalog cites. Click for the original.</p>
+  <div class="wide"><a href="images/social/ig_jangbalperm00.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm00.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm00.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm01.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm01.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm01.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm02.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm02.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm02.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm03.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm03.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm03.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm04.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm04.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm04.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm05.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm05.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm05.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm06.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm06.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm06.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm07.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm07.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm07.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm08.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm08.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm08.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm09.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm09.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm09.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm10.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm10.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm10.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm11.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm11.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm11.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm12.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm12.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm12.jpg" alt=""><i>either</i></a><a href="images/social/ig_jangbalperm13.jpg" target="_blank" class="t v-either" title="social · ig_jangbalperm13.jpg"><img loading="lazy" src="images/_thumbs/social__ig_jangbalperm13.jpg" alt=""><i>either</i></a><a href="images/direct/evanstyle.co.kr_manshair_hair_ES101_INFO03.jpg_6346ec.jpg" target="_blank" class="t v-unknown" title="direct · evanstyle.co.kr_manshair_hair_ES101_INFO03.jpg_6346ec.jpg"><img loading="lazy" src="images/_thumbs/direct__evanstyle.co.kr_manshair_hair_ES101_INFO03.jpg_6346ec.jpg" alt=""><i>unknown</i></a><a href="images/direct/i.redd.it_8j3ussrotoad1.png_3373dd.png" target="_blank" class="t v-unknown" title="direct · i.redd.it_8j3ussrotoad1.png_3373dd.png"><img loading="lazy" src="images/_thumbs/direct__i.redd.it_8j3ussrotoad1.png_3373dd.jpg" alt=""><i>unknown</i></a><a href="images/direct/i.redd.it_acnphqboan8f1.jpeg_d2e93e.jpg" target="_blank" class="t v-unknown" title="direct · i.redd.it_acnphqboan8f1.jpeg_d2e93e.jpg"><img loading="lazy" src="images/_thumbs/direct__i.redd.it_acnphqboan8f1.jpeg_d2e93e.jpg" alt=""><i>unknown</i></a><a href="images/direct/i.redd.it_ebargb5m151f1.jpeg_a9557d.jpg" target="_blank" class="t v-unknown" title="direct · i.redd.it_ebargb5m151f1.jpeg_a9557d.jpg"><img loading="lazy" src="images/_thumbs/direct__i.redd.it_ebargb5m151f1.jpeg_a9557d.jpg" alt=""><i>unknown</i></a><a href="images/direct/i.redd.it_f3nvpoij5qwe1.jpeg_c51a39.jpg" target="_blank" class="t v-unknown" title="direct · i.redd.it_f3nvpoij5qwe1.jpeg_c51a39.jpg"><img loading="lazy" src="images/_thumbs/direct__i.redd.it_f3nvpoij5qwe1.jpeg_c51a39.jpg" alt=""><i>unknown</i></a><a href="images/direct/i.redd.it_ha2jtpi3jn8f1.jpeg_f7854e.jpg" target="_blank" class="t v-unknown" title="direct · i.redd.it_ha2jtpi3jn8f1.jpeg_f7854e.jpg"><img loading="lazy" src="images/_thumbs/direct__i.redd.it_ha2jtpi3jn8f1.jpeg_f7854e.jpg" alt=""><i>unknown</i></a><a href="images/direct/i.redd.it_hpqrtvbmovwc1.jpeg_f89e72.jpg" target="_blank" class="t v-unknown" title="direct · i.redd.it_hpqrtvbmovwc1.jpeg_f89e72.jpg"><img loading="lazy" src="images/_thumbs/direct__i.redd.it_hpqrtvbmovwc1.jpeg_f89e72.jpg" alt=""><i>unknown</i></a><a href="images/direct/i.redd.it_q487zbkzwthh1.png_b80f35.png" target="_blank" class="t v-unknown" title="direct · i.redd.it_q487zbkzwthh1.png_b80f35.png"><img loading="lazy" src="images/_thumbs/direct__i.redd.it_q487zbkzwthh1.png_b80f35.jpg" alt=""><i>unknown</i></a><a href="images/direct/i.redd.it_yyfzbwk2uka51.jpg_50f9cc.jpg" target="_blank" class="t v-unknown" title="direct · i.redd.it_yyfzbwk2uka51.jpg_50f9cc.jpg"><img loading="lazy" src="images/_thumbs/direct__i.redd.it_yyfzbwk2uka51.jpg_50f9cc.jpg" alt=""><i>unknown</i></a><a href="images/direct/preview.redd.it_oxqazhdjk8wd1.png_width_874_format_png_auto_webp_s_bc0c905aa19cc881a81e80b74d73cc520.png" target="_blank" class="t v-unknown" title="direct · preview.redd.it_oxqazhdjk8wd1.png_width_874_format_png_auto_webp_s_bc0c905aa19cc881a81e80b74d73cc520.png"><img loading="lazy" src="images/_thumbs/direct__preview.redd.it_oxqazhdjk8wd1.png_width_874_format_png_auto_webp_s_bc0c905aa19cc881a81e80b74d73cc520.jpg" alt=""><i>unknown</i></a><a href="images/direct/preview.redd.it_w4k25ak5m0rf1.png_width_756_format_png_auto_webp_s_f208f9b440a7a9051789d8c14d86a13bb.png" target="_blank" class="t v-unknown" title="direct · preview.redd.it_w4k25ak5m0rf1.png_width_756_format_png_auto_webp_s_f208f9b440a7a9051789d8c14d86a13bb.png"><img loading="lazy" src="images/_thumbs/direct__preview.redd.it_w4k25ak5m0rf1.png_width_756_format_png_auto_webp_s_f208f9b440a7a9051789d8c14d86a13bb.jpg" alt=""><i>unknown</i></a><a href="images/direct/preview.redd.it_yzeolhezl0rf1.png_width_778_format_png_auto_webp_s_3ce271372bd6ded244f2b4cf35f221fa8.png" target="_blank" class="t v-unknown" title="direct · preview.redd.it_yzeolhezl0rf1.png_width_778_format_png_auto_webp_s_3ce271372bd6ded244f2b4cf35f221fa8.png"><img loading="lazy" src="images/_thumbs/direct__preview.redd.it_yzeolhezl0rf1.png_width_778_format_png_auto_webp_s_3ce271372bd6ded244f2b4cf35f221fa8.jpg" alt=""><i>unknown</i></a></div>
+  <h2 style="margin-top:18px">Korean leaf cut set (cleanest salon shots)</h2>
+  <div class="wide"><a href="images/kr/mamedene_리프컷-Rititi-리티티_1909472.jpg" target="_blank" class="t v-either" title="kr · mamedene_리프컷-Rititi-리티티_1909472.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_리프컷-Rititi-리티티_1909472.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene_리프컷-Rititi-리티티_1909473.jpg" target="_blank" class="t v-either" title="kr · mamedene_리프컷-Rititi-리티티_1909473.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_리프컷-Rititi-리티티_1909473.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene_리프컷-Rititi-리티티_1909474.jpg" target="_blank" class="t v-either" title="kr · mamedene_리프컷-Rititi-리티티_1909474.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_리프컷-Rititi-리티티_1909474.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene_리프컷-Rititi-리티티_1909481.jpg" target="_blank" class="t v-either" title="kr · mamedene_리프컷-Rititi-리티티_1909481.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_리프컷-Rititi-리티티_1909481.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene_리프컷-Rititi-리티티_1912569.jpg" target="_blank" class="t v-either" title="kr · mamedene_리프컷-Rititi-리티티_1912569.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_리프컷-Rititi-리티티_1912569.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene_리프컷-Rititi-리티티_1912570.jpg" target="_blank" class="t v-either" title="kr · mamedene_리프컷-Rititi-리티티_1912570.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_리프컷-Rititi-리티티_1912570.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene_리프컷-꾸블랑헤어_1909578.jpg" target="_blank" class="t v-either" title="kr · mamedene_리프컷-꾸블랑헤어_1909578.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_리프컷-꾸블랑헤어_1909578.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene_리프컷-꾸블랑헤어_1909579.jpg" target="_blank" class="t v-either" title="kr · mamedene_리프컷-꾸블랑헤어_1909579.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_리프컷-꾸블랑헤어_1909579.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene_리프컷-꾸블랑헤어_1909581.jpg" target="_blank" class="t v-either" title="kr · mamedene_리프컷-꾸블랑헤어_1909581.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_리프컷-꾸블랑헤어_1909581.jpg" alt=""><i>either</i></a><a href="images/kr/mamedene_리프컷-꾸블랑헤어_1919508.jpg" target="_blank" class="t v-either" title="kr · mamedene_리프컷-꾸블랑헤어_1919508.jpg"><img loading="lazy" src="images/_thumbs/kr__mamedene_리프컷-꾸블랑헤어_1919508.jpg" alt=""><i>either</i></a></div>
+</section>
+
+<section id="script">
+  <h2>What to say at the salon</h2>
+  <div class="script">
+    <b>Synthesis from the catalog (§3), not a quote from any one stylist.</b>
+    <ol>
+      <li>Base cut: leaf cut or light layers (리프컷 / シースルーレイヤー). <b>No two-block</b>, say it out loud, barbers default to it.</li>
+      <li>Perm: digital or setting perm on <b>large rods</b>, mid-lengths→ends only. Register: 빈티지펌 / 쉐도우펌 / ニュアンス. "Not too much volume, S-wave not C-curl, I will push it back."</li>
+      <li>Want the pushed-back front to stand? Add a <b>root perm</b> (cold or iron) as a separate line item.</li>
+      <li>Skip down perm unless the sides are still at chin length.</li>
+      <li>Show the wave-strength scale in <a href="images/pdf/hairmode_jm25971_goald-tokyo-mens-hair-book.pdf">GOALD Tokyo Men's Hair Book (PDF)</a> and point at 10–30 %.</li>
+      <li>After: no wash 48–72 h, no hats or rain in that window, sulfate-free wash, product on damp hair squeezed not combed, blow-dry toward where it should sit.</li>
+    </ol>
+  </div>
+</section>
+
+<section id="cost">
+  <h2>Digital perm cost, medium/long tier (≈USD)</h2>
+  <table>
+    <tr><th>Region</th><th>One perm</th><th>Per year (2–3 perms + trims + products)</th></tr>
+    <tr><td>Korea</td><td>$107–254</td><td>$340–680</td></tr>
+    <tr><td>Japan</td><td>$56–147</td><td>$380–670</td></tr>
+    <tr><td>Taiwan</td><td>$62–156</td><td>$420–680</td></tr>
+    <tr><td>Vietnam (uốn nhẹ Hàn Quốc)</td><td>₫500–900k</td><td>rises with length, never tiered explicitly</td></tr>
+    <tr><td>Singapore (by length)</td><td>S$240 / 270 / 300+</td><td>—</td></tr>
+    <tr><td>US</td><td>$150–450</td><td>$400–900 (up to 1,550)</td></tr>
+    <tr><td>Australia</td><td>$118–204</td><td>$720–1,140</td></tr>
+    <tr><td>UK</td><td>$244–295</td><td>$830–1,340</td></tr>
+  </table>
+  <p class="small">Every headline price is a "from" for very short hair. Budget the top of the range. Sources per number in catalog.md §2.</p>
+</section>
+
+<footer>
+  Research done with Claude Code: subagents drove a logged-in Chrome session to get past login walls, IP blocks and Cloudflare checks; the main agent only wrote reports. Photos and PDFs belong to their original salons, publishers and posters; they are collected here for personal reference only. See <a href="README.md">README</a> for provenance, cost and how this was built.
+</footer>
+</div>
+
+<div id="tray"><b>Shortlist:</b> <span id="tray-list"></span> <button id="copy">copy for stylist</button> <button class="clr" id="clear">clear</button></div>
+
+<script>
+(function(){
+  var KEY='hair-picks', picks=[];
+  try{ picks=JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){ picks=[]; }
+  var titles={};
+  document.querySelectorAll('.card').forEach(function(c){ titles[c.dataset.key]=c.querySelector('h3').textContent; });
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(picks)); }catch(e){} }
+  function render(){
+    document.querySelectorAll('.card').forEach(function(c){
+      var on=picks.indexOf(c.dataset.key)>=0; c.classList.toggle('picked',on);
+      var b=c.querySelector('.pick'); b.setAttribute('aria-pressed',on?'true':'false'); b.textContent=on?'★ picked':'☆ pick';
+    });
+    var t=document.getElementById('tray'); t.classList.toggle('on',picks.length>0);
+    document.getElementById('tray-list').textContent=picks.map(function(k){return titles[k];}).join(' · ');
+  }
+  document.querySelectorAll('.pick').forEach(function(b){ b.addEventListener('click',function(){
+    var k=b.dataset.key, i=picks.indexOf(k); if(i>=0) picks.splice(i,1); else picks.push(k); save(); render(); }); });
+  document.getElementById('clear').addEventListener('click',function(){ picks=[]; save(); render(); });
+  document.getElementById('copy').addEventListener('click',function(){
+    var txt='Hair brief: East Asian male, oval face, thick straight hair, chin-to-shoulder length. Light flowy S-wave, must also push back.\n'+
+      'Base: leaf cut / light layers, NO two-block.\nPerm: digital or setting perm, large rods, mid-lengths to ends only, root natural. Optional separate root perm at the front.\n'+
+      'Styles I like: '+picks.map(function(k){return titles[k];}).join('; ')+'\nWave strength: 10-30% on the GOALD scale.';
+    if(navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){ document.getElementById('copy').textContent='copied'; setTimeout(function(){document.getElementById('copy').textContent='copy for stylist';},1500); });
+    else window.prompt('Copy:',txt);
+  });
+  // filters
+  var fs={'f-all':function(c){return true;}, 'f-digital':function(c){return c.querySelector('.badge').classList.contains('b-digital');},
+           'f-back':function(c){return /^Yes|Best/.test(c.querySelector('.meta b').textContent);}};
+  Object.keys(fs).forEach(function(id){ document.getElementById(id).addEventListener('click',function(){
+    Object.keys(fs).forEach(function(j){ document.getElementById(j).setAttribute('aria-pressed', j===id?'true':'false'); });
+    document.querySelectorAll('.card').forEach(function(c){ c.style.display=fs[id](c)?'':'none'; }); }); });
+  // theme
+  var root=document.documentElement;
+  try{ var th=localStorage.getItem('hair-theme'); if(th) root.setAttribute('data-theme',th); }catch(e){}
+  document.getElementById('theme').addEventListener('click',function(){
+    var cur=root.getAttribute('data-theme'); var dark=cur?cur==='dark':!window.matchMedia('(prefers-color-scheme: light)').matches;
+    var nxt=dark?'light':'dark'; root.setAttribute('data-theme',nxt); try{ localStorage.setItem('hair-theme',nxt); }catch(e){} });
+  render();
+})();
+</script>
+</body>
+</html>
