@@ -4,13 +4,13 @@ Personal research: which haircut and perm to ask for at the next salon visit. Ta
 
 Everything here was researched by Claude Code subagents driving a logged-in Chrome session, and written up by the main agent. Two passes, 2026-09-07 and 2026-09-08. Total spend is in [Cost](#cost).
 
-**Site:** open `index.html` (or the GitHub Pages URL once published, see [Publish](#publish)). It is a style picker: ten candidate styles with badges, sample photos, what to ask for, cost and hold time. Star the ones you like and copy the shortlist for the stylist. `images/index.html` is the full 1,318-thumbnail gallery grouped by style category with digital / either / cold filters.
+**Site:** open `index.html` (or the GitHub Pages URL once published, see [Publish](#publish)). It is "Men's Perm Lookbook 2026", a photo gallery: all 1,255 photos grouped into 8 styles plus the 42 PDF previews, with style filter chips, a lightbox (filmstrip, jump to number, keyboard and swipe) and a light/dark toggle. The research itself (specs, cost, what to ask for) is in `catalog.md`, not on the page. `images/index.html` is the full 1,318-thumbnail gallery grouped by style category with digital / either / cold filters.
 
 ## What is inside
 
 | Path | What |
 |---|---|
-| `index.html` | Style picker site. Regenerate with `python build_site.py` |
+| `index.html` | Photo gallery site (all photos grouped by style). Regenerate with `python build_site.py` |
 | `catalog.md` | **Main deliverable.** §0 five facts · §1 techniques / cut families / named styles · §2 master table (28 styles: routine, cost, hold, slick-back?) · §3 what to ask for · §4 books · §5 image refs · §6 risks · §8–13 pass 2 (what is on disk, best 10 to open, new vocabulary for JP/KR/HK/TW/VN/TH/ID, decision-changing facts, working access routes, open gaps) · §14 style name → digital vs cold |
 | `sources.md` | Every site and query tried, with result. Access matrix (what is blocked where, what works). **Read before searching again** |
 | `images/index.html` | Gallery: 1,255 images + 42 PDFs, grouped by category, badge = digital / either / cold by filename keyword. `images/classified.csv` is the list, `images/_namesort.py` regenerates both |

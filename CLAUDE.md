@@ -6,6 +6,6 @@ Hobby research: hairstyle catalog for an East Asian male, medium→shoulder leng
 - `catalog.md` — main deliverable. `sources.md` — every source tried; **read before any new search**.
 - `notes/` — raw subagent notes. `images/` — harvested images, PDFs, `index.html` gallery.
 - `prompt/` — user prompts per Claude Code session + agent summaries + ccusage cost. Regenerate with `python prompt/_build_prompts.py` (reads `~/.claude/projects/D--researchs-hobby/`).
-- `index.html` — style picker site; regenerate with `python build_site.py` after `python images/_namesort.py`.
+- `index.html` — photo gallery site (all photos grouped by style); regenerate with `python build_site.py` after `python images/_namesort.py`.
 
 Rules: research goes through subagents (may drive the user's Chrome); main agent only writes reports. Log every query tried in `sources.md`. Never download behind a login. Commit date convention: same day the research folder was last updated.
