@@ -9,6 +9,7 @@ import csv
 import html
 import os
 import re
+from collections import Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROWS = list(csv.DictReader(open(os.path.join(HERE, "images", "classified.csv"), encoding="utf-8")))
@@ -154,6 +155,133 @@ def head(name, sub, count):
     return f'<h2><span>{html.escape(name)}</span> <small>{html.escape(sub)} · {count}</small></h2>'
 
 
+# ---- Style guide: the 10 CARDS styles, shown above the gallery. Facts come from CARDS and catalog.md (§2, §3, §10, §14).
+BADGE = {"digital": "Digital perm", "either": "Digital or cold", "cold": "Cold perm"}
+# Closest gallery group for each style (most of its filename matches land there; catalog.md §14 for the rest).
+GUIDE_GROUP = {"allback": "B_pushed_back", "shadow": "H_generic_perm", "vintage": "D_mash_long", "leaf": "A_center_part",
+               "digital": "H_generic_perm", "nuance": "H_generic_perm", "centerpart": "A_center_part",
+               "wolf": "C_wolf_layered", "mash": "D_mash_long", "hippie": "E_hippie_grunge"}
+# Groups no guide style covers: perm type from catalog.md §14.
+GROUP_PERM = {"F_spiral_tight": "Usually a cold perm (too curly for digital rods).",
+              "G_comma_short": "Usually a cold perm (too short for digital rods)."}
+# Daily styling and upkeep, short, from catalog.md §2 master table (rows in brackets).
+UPKEEP = {
+    "allback": "Gel on damp roots, comb back, light spray: 1–3 minutes. A down perm on the sides looks good for 3–4 weeks.",
+    "shadow": "Towel-dry, squeeze in cream. Trim every 8 weeks.",
+    "vintage": "Dry and go: squeeze in balm or essence. Trim every 8 weeks.",
+    "leaf": "A little balm, about 2 minutes. Trim every 8 weeks.",
+    "digital": "Mist, pat dry, cream on the lengths, blow-dry on low, cool air to set: about 5 minutes. Trim every 8 weeks.",
+    "nuance": "Light wax, or scatter with fingers and soft wax. Trim every 8 weeks.",
+    "centerpart": "Oil or balm through damp hair, set the part with your fingers. Wind ruins it. Trim every 8 weeks.",
+    "wolf": "Diffuser and volume powder, brush back. Trim every 8 weeks, or it turns into a mullet.",
+    "mash": "Needs thinning or a down perm at the sides on thick hair.",
+    "hippie": "Hairspray; a deep conditioning mask every week. Trim every 8 weeks.",
+}
+EXTRA_NAMES = {"allback": {"VN": "vuốt ngược"}}  # catalog.md §10 Vietnamese vocabulary
+# Plain-English fixes and one-time glosses for the salon jargon in CARDS.
+FIX = [(" (inference)", ""), ("Best partner", "Yes, the best match"), ("8-week trims", "Trim every 8 weeks"),
+       ("Digital or setting perm", "Digital perm"), ("mid-lengths→ends", "middle to ends"), ("mid→ends", "middle to ends"),
+       ("(JP stylists)", "(Japanese stylists)"), ("(stylist-verified)", "(confirmed by a stylist)"),
+       ("JP perm tier", "JP standard perm price"), (" Needs a decent forehead.", " Shows your forehead."),
+       ("Refuse two-block explicitly.", "Say no to a two-block."),
+       ("No as a forward style · Yes with karma root lift", "No when worn forward; yes with a root perm at the part"),
+       ("Low (full) · medium (semi)", "Not much (full hippie); partly (semi-hippie)")]
+GLOSS = [("down perm", " (flattens puffy sides)"), ("two-block", " (shaved short sides)"), ("C-curl", " (tight inward curl)"),
+         ("root perm", " (lifts the hair at the scalp)"), ("S-wave", " (loose S-shaped wave)")]
+
+
+def plain(texts):
+    seen, out = set(), []
+    for t in texts:
+        for a, b in FIX:
+            t = t.replace(a, b)
+        for w, g in GLOSS:
+            m = re.search(re.escape(w), t, re.I)
+            if w not in seen and m:
+                t = t[:m.end()] + g + t[m.end():]
+                seen.add(w)
+        out.append(t)
+    return out
+
+
+def by_country(names, key):
+    """Split 'a · b · c' into KR / JP / CN / VN by script. Latin names with no Vietnamese marks are skipped."""
+    out = {}
+    for n in [n.strip() for n in names.split("·")]:
+        if re.search(r"[가-힣]", n):
+            k = "KR"
+        elif re.search(r"[぀-ヿ]", n):
+            k = "JP"
+        elif re.search(r"[一-鿿]", n):
+            k = "CN"
+        elif re.search(r"[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]", n.lower()):
+            k = "VN"
+        else:
+            continue
+        out.setdefault(k, []).append(n)
+    for k, v in EXTRA_NAMES.get(key, {}).items():
+        out.setdefault(k, []).append(v)
+    return [(k, " · ".join(out[k])) for k in ("KR", "JP", "CN", "VN") if k in out]
+
+
+def back_word(b):
+    return "Yes" if re.match(r"^Yes|Best", b) else "No" if b.startswith("No") else "Partly"
+
+
+GROUP_NAME = {c: names(c, label)[0] for c, label in CATS}
+GROUP_COUNT = Counter(r["category"] for r in ROWS)
+USED_THUMBS = set()
+GUIDE_LINKS = {}  # gallery group -> guide styles that point to it
+
+
+def guide_card(c):
+    main = c["title"].split(" (")[0]
+    matches = [r for r in ROWS if re.search(c["rx"], (r["folder"] + "/" + r["file"]).lower())]
+    order = {"digital": 0, "either": 1, "cold": 2, "unknown": 3}
+    ranked = sorted(matches, key=lambda r: order[r["verdict"]])
+    hero = next((r for r in ranked if r["file"] not in USED_THUMBS), ranked[0])  # no repeated thumbs across cards
+    USED_THUMBS.add(hero["file"])
+    g = GUIDE_GROUP[c["key"]]
+    GUIDE_LINKS.setdefault(g, []).append((c["key"], main, c["verdict"]))
+    spec, cost, hold, back = plain([c["spec"], c["cost"], c["hold"], c["back"]])
+    local = "".join(f'<dt>{k}</dt><dd lang="{ {"KR": "ko", "JP": "ja", "CN": "zh", "VN": "vi"}[k] }">{html.escape(v)}</dd>'
+                    for k, v in by_country(c["names"], c["key"]))
+    return f'''<article class="gcard" id="guide-{c["key"]}">
+  <div class="gtop">
+    <img class="gthumb" loading="lazy" decoding="async" src="{html.escape(thumb(hero))}" alt="">
+    <div>
+      <h3>{html.escape(main)}</h3>
+      <span class="badge b-{c["verdict"]}">{BADGE[c["verdict"]]}</span>
+    </div>
+  </div>
+  <dl class="local">{local}</dl>
+  <details>
+    <summary>Details</summary>
+    <dl class="facts">
+      <dt>What to ask</dt><dd>{html.escape(spec)}</dd>
+      <dt>Cost</dt><dd>{html.escape(cost)}</dd>
+      <dt>Lasts</dt><dd>{html.escape(hold)}</dd>
+      <dt>Upkeep</dt><dd>{html.escape(UPKEEP[c["key"]])}</dd>
+      <dt>Pushes back?</dt><dd>{html.escape(back if "·" in back else back_word(c["back"]))}</dd>
+    </dl>
+  </details>
+  <a class="see" href="#{g}">See {GROUP_COUNT[g]} photos: {html.escape(GROUP_NAME[g])} →</a>
+</article>'''
+
+
+GUIDE_HTML = "\n".join(guide_card(c) for c in CARDS)
+
+
+def guide_line(g):
+    """Small line under a gallery group header, linking back to its style guide card(s)."""
+    if g in GUIDE_LINKS:
+        items = " · ".join(f'<a href="#guide-{k}">{html.escape(n)}</a> ({BADGE[v].lower()})' for k, n, v in GUIDE_LINKS[g])
+        return f'<p class="gline">In the style guide: {items}</p>'
+    if g in GROUP_PERM:
+        return f'<p class="gline">{html.escape(GROUP_PERM[g])}</p>'
+    return ""
+
+
 SECTIONS, CHIPS, N_TILES = [], [], 0
 for c, label in CATS:
     rs = [r for r in ROWS if r["category"] == c]
@@ -163,7 +291,7 @@ for c, label in CATS:
     name, sub = names(c, label)
     CHIPS.append(f'<a class="chip" href="#{c}" data-cat="{c}">{html.escape(name)} <span>{len(rs)}</span></a>')
     SECTIONS.append(f'''<section class="gsec" id="{c}" data-name="{html.escape(name)}">
-  {head(name, sub, f"{len(rs)} photos")}
+  {head(name, sub, f"{len(rs)} photos")}{guide_line(c)}
   <div class="gg">{"".join(tile(r, c, i, name) for i, r in enumerate(rs))}</div>
 </section>''')
 assert N_TILES == len(ROWS), (N_TILES, len(ROWS))
@@ -245,13 +373,45 @@ a{color:var(--acc)}
 .ib:hover{border-color:var(--acc);color:var(--acc)}
 /* sticky style chips: they wrap on wider screens, scroll sideways on phones */
 .gbar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-.chips{display:flex;flex-wrap:wrap;gap:6px;padding-top:8px;padding-bottom:8px}
-.chip{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--fg);text-decoration:none;font-size:14px;white-space:nowrap;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:5px;padding-top:8px;padding-bottom:8px}
+.chip{flex:none;display:inline-flex;align-items:center;gap:5px;min-height:38px;padding:0 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--fg);text-decoration:none;font-size:14px;white-space:nowrap;cursor:pointer}
 .chip span{color:var(--mut);font-size:12px;font-variant-numeric:tabular-nums}
 .chip:hover{border-color:var(--acc)}
 .chip.here{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
 .chip[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg);box-shadow:none}
 .chip[aria-current="true"] span{color:inherit;opacity:.7}
+/* style guide */
+.hbtn{grid-column:1;margin:14px 0 0}
+.btn{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;background:var(--fg);color:var(--bg);text-decoration:none;font-weight:600;font-size:15px}
+.btn:hover{background:var(--acc);color:var(--acc-fg)}
+.guide-chip{font-weight:600;border-color:var(--acc);color:var(--acc)}
+.guide{padding-top:26px;padding-bottom:10px}
+.guide h2{margin:0 0 8px;font:600 clamp(24px,2.6vw,30px)/1.2 var(--serif)}
+.legend{margin:0 0 8px;max-width:90ch;font-size:14px;line-height:1.7;color:var(--mut)}
+.legend .badge{margin-right:2px}
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;align-items:start;margin-top:14px}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.gtop{display:flex;gap:12px;align-items:center}
+.gthumb{width:56px;height:56px;border-radius:8px;object-fit:cover;flex:none;background:var(--soft)}
+.gcard h3{margin:0 0 4px;font:600 17px/1.25 var(--serif)}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.5;white-space:nowrap}
+.b-digital{background:#e3f0e8;color:#2f6f4f}.b-either{background:#f6ecd6;color:#8a5d0f}.b-cold{background:#f7e1dc;color:#9c3426}
+:root[data-theme="dark"] .b-digital{background:#1f3328;color:#8fd0ab}:root[data-theme="dark"] .b-either{background:#352a15;color:#e3bd6c}:root[data-theme="dark"] .b-cold{background:#3a201b;color:#f0998a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .b-digital{background:#1f3328;color:#8fd0ab}:root:not([data-theme="light"]) .b-either{background:#352a15;color:#e3bd6c}:root:not([data-theme="light"]) .b-cold{background:#3a201b;color:#f0998a}}
+.local{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 8px;font-size:13px}
+.local dt{color:var(--mut);font-weight:600;font-size:11px;letter-spacing:.05em;padding-top:2px}
+.local dd{margin:0;overflow-wrap:anywhere}
+.gcard details{border-top:1px solid var(--line)}
+.gcard summary{cursor:pointer;display:flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;color:var(--acc);list-style:none}
+.gcard summary::-webkit-details-marker{display:none}
+.gcard summary::after{content:"+";margin-left:6px}
+.gcard details[open] summary::after{content:"−"}
+.facts{margin:0 0 6px;display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:14px;line-height:1.45}
+.facts dt{color:var(--mut)}.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.see{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;text-decoration:none;margin-top:-8px}
+.see:hover{text-decoration:underline}
+.gline{margin:-8px 0 12px;font-size:14px;color:var(--mut)}
+.gline a{display:inline-block;padding:4px 0}
 /* gallery */
 .gsec{padding:44px 0 6px;border-top:1px solid var(--line)}
 #gallery>.gsec:first-child,.filtered .gsec.on{padding-top:22px;border-top:0}
@@ -303,6 +463,10 @@ footer .links a{white-space:nowrap;display:inline-block;padding:2px 0}
   .chip{min-height:44px}
   html{scroll-padding-top:70px}
   .gsec{padding-top:32px}
+  .ggrid{display:flex;align-items:flex-start;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin-right:-16px;padding-right:28px;padding-bottom:4px;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+  .ggrid::-webkit-scrollbar{display:none}
+  .gcard{flex:0 0 80vw;max-width:340px;scroll-snap-align:start}
+  .legend{font-size:13px;line-height:1.6}
   .gg{grid-template-columns:repeat(3,1fr);gap:3px}
   .t{border-radius:4px}
   .pdfs{grid-template-columns:repeat(2,1fr)}
@@ -432,11 +596,21 @@ page = f'''<!doctype html>
   <div class="tools"><button class="ib" id="theme" title="Light / dark" aria-label="Toggle light or dark theme">◐</button><a class="ib" href="{REPO}" target="_blank" rel="noopener" aria-label="View source on GitHub" title="View source on GitHub">{GH_SVG}</a></div>
   <p class="sub">AI agents collected these perm photos from Asian salon sites, Pinterest, Instagram and Reddit. Tap any photo to flip through its group.</p>
   <p class="stats"><span class="nw"><b>{len(ROWS):,}</b> photos</span> · <span class="nw"><b>{len(SECTIONS)}</b> styles</span> · <span class="nw"><b>{len(PDFS)}</b> salon magazines</span> · <span class="nw"><b>{N_SRC}</b> sources</span></p>
+  <p class="hbtn"><a class="btn" href="#guide">Style guide: what to ask, cost, digital or cold →</a></p>
 </header>
 
 <nav class="gbar" aria-label="Styles"><div class="wrap chips">
-  <a class="chip" href="#all" data-cat="all" aria-current="true">All <span>{len(ROWS):,}</span></a>{"".join(CHIPS)}
+  <a class="chip guide-chip" href="#guide">Style guide</a><a class="chip" href="#all" data-cat="all" aria-current="true">All <span>{len(ROWS):,}</span></a>{"".join(CHIPS)}
 </div></nav>
+
+<section class="wrap guide" id="guide" aria-labelledby="guide-h">
+  <h2 id="guide-h">Style guide</h2>
+  <p class="legend"><span class="badge b-digital">Digital perm</span> heat perm: looser waves, lasts longer (3–4 months), better for pushing back. <span class="badge b-cold">Cold perm</span> chemical only: tighter curl, cheaper, drops out in 1–2 months. <span class="badge b-either">Digital or cold</span> works either way.</p>
+  <p class="legend">After any perm: no washing for 2–3 days, sulfate-free shampoo, and plan to re-perm about every 3 months.</p>
+  <div class="ggrid">
+{GUIDE_HTML}
+  </div>
+</section>
 
 <main class="wrap" id="gallery">
 {chr(10).join(SECTIONS)}
